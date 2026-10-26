@@ -512,6 +512,13 @@ The Money on Chain ecosystem was analyzed across Oracle Infrastructure, Stableco
 **Evidence:** Reverse auction `0x38ed1F563E75D88cf4Db5Db07972B143b3c8Ebfb` uses swapper `0x24122d7FF0EF57C18e5C333E2c7bD863e4F23c73`, where the DOC/MOC path is not configured. Applicability depends on whether the auction receives DOC through bucket fees.
 **Disposition:** Rejected — no remediation planned. Swapper paths and thresholds are operational configuration monitored by the project, and reports limited to missing, unavailable, or unsuitable swap routes are treated as known configuration issues.
 
+### SP-34 — Combined DOC redemption loses TC proportion through scale truncation
+**Affected components:** `main-sc-protocol-v2@3.0.9` `MocCoreExpansion.redeemTCandTP`; deployed DOC bucket `0x697535055Aa7AfD2C280523C7B062b1F05284661`.
+**Summary:** The combined TC+TP redemption proportion mixes protocol-scale values with a lower-scale intermediate before taking `Math.min`. For DOC, the configured TP target is `1.000000000000000001`, so the `(ctargemaTP - 1)` term is one wei and that arm truncates to 1 (or 0 below the combined target). `Math.min` selects the truncated arm instead of the intended proportion.
+**Impact:** Combined redemptions can burn only dust TC and effectively execute as TP-only redemptions; once combined coverage is below target, the zero proportion makes every DOC combined redemption revert. Failed queued attempts still consume the prepaid execution fee.
+**Evidence:** DOC bucket TP target configuration and `MocCoreExpansion.redeemTCandTP` proportion calculation in deployed `main-sc-protocol-v2@3.0.9`.
+**Disposition:** Unfixed — remediation may be considered later.
+
 ## Governance
 
 ### GOV-01 — Failed execution permanently consumes an accepted proposal
